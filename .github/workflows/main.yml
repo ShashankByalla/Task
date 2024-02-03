@@ -1,0 +1,29 @@
+name: CI
+on:
+  - push
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    name: wisecow deployment
+    steps:
+    - uses: actions/checkout@v2
+    - name: Start minikube
+      uses: medyagh/setup-minikube@master
+    - name: Try the cluster !
+      run: kubectl get pods -A
+    - name: Build image
+      run: |
+        export SHELL=/bin/bash
+        eval $(minikube -p minikube docker-env)
+        docker build -f Dockerfile -t wisecow .
+        echo -n "verifying images:"
+        docker images        
+    - name: Deploy to minikube
+      run:
+        kubectl apply -f wisecow.yml
+    - name: Test service URLs
+      run: |
+        minikube service list
+        minikube service wisecow-service --url
+        echo "------------------opening the service------------------"
+        curl $(minikube service wisecow-service --url)        
